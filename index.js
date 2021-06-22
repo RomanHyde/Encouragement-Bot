@@ -76,7 +76,7 @@ client.on("message", msg => {
 
    if (msg.content.startsWith("$del")) {
     index = parseInt(msg.content.split("$del ")[1])
-    deleteEncouragements(index)
+    deleteEncouragement(index)
     msg.channel.send("Encouraging message deleted.")
 }
 });
