@@ -18,14 +18,21 @@ db.get("encoragements").then(encouragements => {
     if(!encouragements || encouragements.length < 1) {
         db.set("encouragements", starterEncouragements)
     }
-})
+});
+
+db.get("responding").then(value => {
+    // if null first time program has run
+    if (value == null) {
+        db.set("responding", true)
+    }
+});
 
 let updateEncouragements = (encouragingMessage) => {
     db.get("encouragements").then(encouragements => {
         encouragements.push([encouragingMessage])
         db.set("encouragements", encouragements)
     })
-}
+};
 
 let deleteEncouragement = (index) => {
     db.get("encouragements").then(encouragements => {
@@ -58,15 +65,17 @@ client.on("message", msg => {
     getQuote().then(quote => msg.channel.send(quote))
    }
 
-//    Goes through each word in a message to check if it includes a word from the array
-   if(sadWords.some(word => msg.content.includes(word))){
-    //    get messages from database
-    db.get("encouragements").then(encouragements => {
-        //    randomises an encouragement using a random index number ot pull the encouragement
-        const encouragement = encouragements[Math.floor(Math.random() * encouragements.length)]
-        msg.reply(encouragement)
-    })
-   }
+   db.get("responding").then(responding => {
+    if(responding && sadWords.some(word => msg.content.includes(word))){
+        //    get messages from database
+        db.get("encouragements").then(encouragements => {
+            //    randomises an encouragement using a random index number ot pull the encouragement
+            const encouragement = encouragements[Math.floor(Math.random() * encouragements.length)]
+            msg.reply(encouragement)
+        })
+    }
+   });
+
 
    if (msg.content.startsWith("$new")) {
        encouragingMessage = msg.content.split("$new ")[1]
@@ -78,7 +87,29 @@ client.on("message", msg => {
     index = parseInt(msg.content.split("$del ")[1])
     deleteEncouragement(index)
     msg.channel.send("Encouraging message deleted.")
-}
+    }
+
+    if (msg.content.startsWith("$list")) {
+        db.get("encouragements").then(encouragements => {
+            msg.channel.send(encouragements)
+        })
+    }
+
+
+    // Boolean command to turn it on or off "responding false" or "$responding true"
+    if (msg.content.startsWith("$responding")) {
+        value = msg.content.split("$responding ")[1]
+    
+        if (value.toLowerCase() == "true") {
+          db.set("responding", true)
+          msg.channel.send("Responding is on.")
+        } else {
+           db.set("responding", false)
+          msg.channel.send("Responding is off.")     
+        }
+      }
 });
+
+
 
 client.login(process.env.TOKEN);
